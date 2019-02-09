@@ -7,26 +7,17 @@ import {
   readDirSync,
   mkdirSync,
   writeFileSync,
-  removeSync,
+  open,
+  readFileSync,
 } from 'deno';
-import * as path from 'https://deno.land/x/fs/path/mod.ts';
+import * as path from 'https://deno.land/x/fs@v0.2.8/path/mod.ts';
+import { Sha1 } from 'https://deno.land/x/ws@v0.2.8/sha1.ts';
 import { resolveDenoDir } from './path_util.ts';
 import { generateTestSrc } from './mod.ts';
 
 const DENO_DIR = resolveDenoDir();
 const TT_HOME = path.resolve(DENO_DIR, 'tt');
-const TT_TMP_DIR_ROOT = path.resolve(TT_HOME, 'tmp');
-
-function genRandomID(): string {
-  return (
-    Math.random()
-      .toString(36)
-      .substring(2) +
-    Math.random()
-      .toString(36)
-      .substring(2)
-  );
-}
+const TT_TMP_DIR = path.resolve(TT_HOME, 'tmp');
 
 function createDirIfNotExists(path: string) {
   try {
@@ -54,13 +45,13 @@ async function main() {
   }
 
   createDirIfNotExists(TT_HOME);
-  createDirIfNotExists(TT_TMP_DIR_ROOT);
-
-  const TT_TMP_DIR = path.resolve(TT_TMP_DIR_ROOT, genRandomID());
   createDirIfNotExists(TT_TMP_DIR);
 
   for (const file of targetFiles) {
-    const testPath = path.resolve(TT_TMP_DIR, file.name);
+    const sha1 = new Sha1();
+    sha1.update(readFileSync(file.path));
+    const hash = sha1.toString();
+    const testPath = path.resolve(TT_TMP_DIR, hash + '.ts');
     const testSrc = generateTestSrc(file.path);
     writeFileSync(testPath, enc.encode(testSrc));
     const modules = run({
@@ -70,8 +61,6 @@ async function main() {
     console.log(dec.decode(await modules.output()));
     modules.close();
   }
-
-  removeSync(TT_TMP_DIR, { recursive: true });
 }
 
 main();

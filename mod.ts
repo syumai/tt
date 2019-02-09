@@ -1,7 +1,7 @@
 import * as path from 'https://deno.land/x/fs/path/mod.ts';
 
 // to supress error
-const fileName: string = '';
+const fileName: string = 'no_file_name';
 
 export type TestFunc = (t: T) => void | Promise<void>;
 
