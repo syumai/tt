@@ -71,6 +71,7 @@ class tImpl {
 export function generateTestSrc(filePath: string): string {
   return `
 import * as tests from '${filePath}';
+const filePath = '${filePath}';
 const fileName = '${path.basename(filePath)}';
 
 export type TestFunc = (t: T) => void | Promise<void>;
@@ -138,9 +139,17 @@ class tImpl {
   }
 }
 
+let hasError = false;
+
 for (const [testName, testFunc] of Object.entries(tests)) {
   const t = new tImpl(testName, 0, null);
   testFunc(t);
+  hasError = hasError || t.hasError;
+}
+
+if (hasError) {
+  console.log('FAIL');
+  console.log('FAIL ' + filePath);
 }
   `;
 }
