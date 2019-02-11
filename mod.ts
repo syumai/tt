@@ -5,15 +5,25 @@ const fileName: string = 'no_file_name';
 
 export type TestFunc = (t: T) => void | Promise<void>;
 
+export type TError = any;
+
 export interface T {
   name: string;
   parent: T;
   run(name: string, func: TestFunc);
   error(...values: any);
+  hasError: boolean;
+  markAsError();
 }
 
 class tImpl {
-  constructor(private readonly _name, readonly parent: T) {}
+  constructor(
+    private readonly _name,
+    private readonly level,
+    readonly parent: T
+  ) {}
+
+  private _hasError: boolean;
 
   get name(): string {
     if (!this.parent) {
@@ -24,18 +34,36 @@ class tImpl {
 
   run(name: string, func: TestFunc) {
     name = name.replace(/ /g, '_');
-    console.group();
-    func(new tImpl(name, this));
-    console.groupEnd();
+    const t = new tImpl(name, this.level + 1, this);
+    func(t);
   }
 
   error(...values: any) {
-    console.log('- FAIL: ' + this.name);
-    console.group();
+    this.markAsError();
     for (const value of values) {
-      console.log(fileName + ': ', value);
+      this.indentedConsoleLog(fileName + ': ', value);
     }
-    console.groupEnd();
+  }
+
+  get hasError(): boolean {
+    return this._hasError;
+  }
+
+  markAsError() {
+    if (this.hasError) {
+      return;
+    }
+    this._hasError = true;
+    if (this.parent) {
+      this.parent.markAsError();
+    }
+    this.indentedConsoleLog('- FAIL: ' + this.name);
+  }
+
+  indentedConsoleLog(...values: any) {
+    console.indentLevel = this.level;
+    console.log(...values);
+    console.indentLevel = 0;
   }
 }
 
@@ -47,14 +75,22 @@ const fileName = '${path.basename(filePath)}';
 export type TestFunc = (t: T) => void | Promise<void>;
 
 export interface T {
-  parent: T;
   name: string;
+  parent: T;
   run(name: string, func: TestFunc);
   error(...values: any);
+  hasError: boolean;
+  markAsError();
 }
 
 class tImpl {
-  constructor(private readonly _name, readonly parent: T) {}
+  constructor(
+    private readonly _name,
+    private readonly level,
+    readonly parent: T
+  ) {}
+
+  private _hasError: boolean;
 
   get name(): string {
     if (!this.parent) {
@@ -65,23 +101,41 @@ class tImpl {
 
   run(name: string, func: TestFunc) {
     name = name.replace(/ /g, '_');
-    console.group();
-    func(new tImpl(name, this));
-    console.groupEnd();
+    const t = new tImpl(name, this.level + 1, this);
+    func(t);
   }
 
   error(...values: any) {
-    console.log('- FAIL: ' + this.name);
-    console.group();
+    this.markAsError();
     for (const value of values) {
-      console.log(fileName + ': ', value);
+      this.indentedConsoleLog(fileName + ': ', value);
     }
-    console.groupEnd();
+  }
+
+  get hasError(): boolean {
+    return this._hasError;
+  }
+
+  markAsError() {
+    if (this.hasError) {
+      return;
+    }
+    this._hasError = true;
+    if (this.parent) {
+      this.parent.markAsError();
+    }
+    this.indentedConsoleLog('- FAIL: ' + this.name);
+  }
+
+  indentedConsoleLog(...values: any) {
+    console.indentLevel = this.level;
+    console.log(...values);
+    console.indentLevel = 0;
   }
 }
 
 for (const [testName, testFunc] of Object.entries(tests)) {
-  const t = new tImpl(testName, null);
+  const t = new tImpl(testName, 0, null);
   testFunc(t);
 }
   `;
