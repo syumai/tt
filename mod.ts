@@ -14,13 +14,28 @@ function indentedConsoleLog(level: number, ...values: any) {
   console.indentLevel = baseLevel;
 }
 
+interface common {
+  ran: boolean; // Test was executed.
+  failed: boolean; // Test has failed.
+  skipped: boolean; // Test has been skipped.
+  done: boolean; // Test is finished and all subtests have completed.
+
+  finished: boolean; // Test function has completed.
+  hasSub: boolean; // Test has sub test.
+  runner: string; // function name of tRunner running the test
+
+  parent: common;
+  level: number; // Nesting depth of test.
+  name: string; // Name of test.
+  start: Date; // Time test has started.
+  duration: number;
+  sub: Array<T>; // Queue of subtests.
+}
+
 export interface T {
-  name: string;
-  parent: T;
+  common;
   run(name: string, func: TestFunc);
   error(...values: any);
-  hasError: boolean;
-  markAsError();
 }
 
 class tImpl {
