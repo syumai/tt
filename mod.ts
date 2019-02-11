@@ -1,11 +1,18 @@
 import * as path from 'https://deno.land/x/fs/path/mod.ts';
 
-// to supress error
+// to suppress error
 const fileName: string = 'no_file_name';
 
 export type TestFunc = (t: T) => void | Promise<void>;
 
-export type TError = any;
+const consoleLogIndentWidth = 4;
+
+function indentedConsoleLog(level: number, ...values: any) {
+  const baseLevel = console.indentLevel;
+  console.indentLevel = level * consoleLogIndentWidth;
+  console.log(...values);
+  console.indentLevel = baseLevel;
+}
 
 export interface T {
   name: string;
@@ -41,7 +48,7 @@ class tImpl {
   error(...values: any) {
     this.markAsError();
     for (const value of values) {
-      this.indentedConsoleLog(fileName + ': ', value);
+      indentedConsoleLog(this.level + 1, fileName + ': ', value);
     }
   }
 
@@ -57,13 +64,7 @@ class tImpl {
     if (this.parent) {
       this.parent.markAsError();
     }
-    this.indentedConsoleLog('- FAIL: ' + this.name);
-  }
-
-  indentedConsoleLog(...values: any) {
-    console.indentLevel = this.level;
-    console.log(...values);
-    console.indentLevel = 0;
+    indentedConsoleLog(this.level, '--- FAIL: ' + this.name);
   }
 }
 
@@ -74,6 +75,15 @@ const fileName = '${path.basename(filePath)}';
 
 export type TestFunc = (t: T) => void | Promise<void>;
 
+const consoleLogIndentWidth = 4;
+
+function indentedConsoleLog(level: number, ...values: any) {
+  const baseLevel = console.indentLevel;
+  console.indentLevel = level * consoleLogIndentWidth;
+  console.log(...values);
+  console.indentLevel = baseLevel;
+}
+
 export interface T {
   name: string;
   parent: T;
@@ -108,7 +118,7 @@ class tImpl {
   error(...values: any) {
     this.markAsError();
     for (const value of values) {
-      this.indentedConsoleLog(fileName + ': ', value);
+      indentedConsoleLog(this.level + 1, fileName + ': ', value);
     }
   }
 
@@ -124,13 +134,7 @@ class tImpl {
     if (this.parent) {
       this.parent.markAsError();
     }
-    this.indentedConsoleLog('- FAIL: ' + this.name);
-  }
-
-  indentedConsoleLog(...values: any) {
-    console.indentLevel = this.level;
-    console.log(...values);
-    console.indentLevel = 0;
+    indentedConsoleLog(this.level, '--- FAIL: ' + this.name);
   }
 }
 
